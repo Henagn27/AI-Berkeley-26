@@ -13,4 +13,6 @@ public class informationAI {
         this.date = date;
         this.time = time;
     }
+
+    
 }
