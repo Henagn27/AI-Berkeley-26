@@ -74,4 +74,6 @@ public class informationNonAI {
     void setFuel(int tempFuel){
      fuel = tempFuel;
     }
+
+    
 }
