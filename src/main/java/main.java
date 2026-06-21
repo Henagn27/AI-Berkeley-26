@@ -98,7 +98,7 @@ public class main {
             return "Java received Non-AI Info.";
         }
 
-        return "Java received an unknown action.";
+        return "Java received an unknown action: " + action;
     }
 
     private static String decideRoute(String action) {
