@@ -94,6 +94,10 @@ public class main {
             return "Java received AI Info for Beechcraft Bonanza.";
         }
 
+        if ("ai-boeing-737-max".equalsIgnoreCase(action)) {
+            return "Java received AI Info for Boeing 737 MAX.";
+        }
+
         if ("non-ai-info".equalsIgnoreCase(action)) {
             return "Java received Non-AI Info.";
         }
@@ -111,15 +115,24 @@ public class main {
         String aircraft = formatAircraft(parts[2]);
         String departingAirport = parts[3];
         String arrivingAirport = parts[4];
+        String departingAirportName = formatAirport(departingAirport);
+        String arrivingAirportName = formatAirport(arrivingAirport);
         double distance = estimateDistanceNauticalMiles(departingAirport, arrivingAirport);
+        String estimatedFlightTime = estimateFlightTime(distance, aircraft);
 
         // Only the AI flow calls OpenAI. The Non AI flow stays as a normal route summary.
         if ("ai".equals(parts[1])) {
-            return getAiFlightPlanRecommendation(aircraft, departingAirport, arrivingAirport, distance);
+            return getAiFlightPlanRecommendation(aircraft, departingAirportName, arrivingAirportName, distance, estimatedFlightTime);
         }
 
-        return mode + " route selected: " + aircraft + " from " + departingAirport + " to " + arrivingAirport
-                + ". Estimated distance: " + Math.round(distance) + " nautical miles.";
+        return "Manual Flight Record\n\n"
+                + "Aircraft: " + aircraft + "\n"
+                + "Departing airport: " + departingAirportName + "\n"
+                + "Arrival airport: " + arrivingAirportName + "\n"
+                + "Estimated distance: " + Math.round(distance) + " nautical miles.\n\n"
+                + "Estimated flight time: " + estimatedFlightTime + "\n\n"
+                + "No AI recommendation was generated.\n"
+                + "Future record fields: weather conditions, fuel usage, ATC notes, and actual flight plan used.";
     }
 
     private static String formatAircraft(String aircraft) {
@@ -131,10 +144,66 @@ public class main {
             return "Beechcraft Bonanza";
         }
 
+        if ("boeing-737-max".equalsIgnoreCase(aircraft)) {
+            return "Boeing 737 MAX";
+        }
+
         return aircraft;
     }
 
-    private static String getAiFlightPlanRecommendation(String aircraft, String departingAirport, String arrivingAirport, double distance) {
+    private static String formatAirport(String airport) {
+        if ("KLAX".equalsIgnoreCase(airport)) {
+            return "Los Angeles International (KLAX)";
+        }
+
+        if ("KSFO".equalsIgnoreCase(airport)) {
+            return "San Francisco International (KSFO)";
+        }
+
+        if ("KDEN".equalsIgnoreCase(airport)) {
+            return "Denver International (KDEN)";
+        }
+
+        if ("KSAN".equalsIgnoreCase(airport)) {
+            return "San Diego International (KSAN)";
+        }
+
+        if ("KLAS".equalsIgnoreCase(airport)) {
+            return "Harry Reid International (KLAS)";
+        }
+
+        if ("KPHX".equalsIgnoreCase(airport)) {
+            return "Phoenix Sky Harbor International (KPHX)";
+        }
+
+        if ("KSEA".equalsIgnoreCase(airport)) {
+            return "Seattle-Tacoma International (KSEA)";
+        }
+
+        if ("KORD".equalsIgnoreCase(airport)) {
+            return "Chicago O'Hare International (KORD)";
+        }
+
+        if ("KDFW".equalsIgnoreCase(airport)) {
+            return "Dallas/Fort Worth International (KDFW)";
+        }
+
+        if ("KATL".equalsIgnoreCase(airport)) {
+            return "Hartsfield-Jackson Atlanta International (KATL)";
+        }
+
+        if ("KJFK".equalsIgnoreCase(airport)) {
+            return "John F. Kennedy International (KJFK)";
+        }
+
+        if ("KMIA".equalsIgnoreCase(airport)) {
+            return "Miami International (KMIA)";
+        }
+
+        return airport;
+    }
+
+    private static String getAiFlightPlanRecommendation(String aircraft, String departingAirport, String arrivingAirport, double distance, String estimatedFlightTime) {
         if (System.getenv("OPENAI_API_KEY") == null || System.getenv("OPENAI_API_KEY").isBlank()) {
             return "OPENAI_API_KEY is missing. Set it in PowerShell, restart the server, and try the AI route again.";
         }
@@ -145,7 +214,8 @@ public class main {
                 + "Aircraft: " + aircraft + ". "
                 + "Route: " + departingAirport + " to " + arrivingAirport + ". "
                 + "Estimated great-circle distance: " + Math.round(distance) + " nautical miles. "
-                + "Base the recommendation only on aircraft type and distance. "
+                + "Estimated flight time: " + estimatedFlightTime + ". "
+                + "Base the recommendation only on aircraft type, distance, and estimated flight time. "
                 + "The first sentence must be exactly this format: Based on the information given, most likely the flight plan will be IFR. "
                 + "or this format: Based on the information given, most likely the flight plan will be VFR. "
                 + "After that, add one short reason. "
@@ -160,7 +230,17 @@ public class main {
                     .build();
 
             Response response = client.responses().create(params);
-            return "Estimated distance: " + Math.round(distance) + " nautical miles.\n\n" + getOutputText(response);
+            return "CloudFlite AI Estimate\n\n"
+                    + "Aircraft\n"
+                    + aircraft + "\n\n"
+                    + "Route\n"
+                    + departingAirport + " to " + arrivingAirport + "\n\n"
+                    + "Estimated distance\n"
+                    + Math.round(distance) + " nautical miles\n\n"
+                    + "Estimated flight time\n"
+                    + estimatedFlightTime + "\n\n"
+                    + "Recommendation\n"
+                    + getOutputText(response);
         } catch (RuntimeException error) {
             return "OpenAI request failed: " + error.getMessage();
         }
@@ -184,6 +264,35 @@ public class main {
         return 3440.065 * c;
     }
 
+    private static String estimateFlightTime(double distance, String aircraft) {
+        double speed = estimatedCruiseSpeedKnots(aircraft);
+        int totalMinutes = (int) Math.round((distance / speed) * 60);
+        int hours = totalMinutes / 60;
+        int minutes = totalMinutes % 60;
+
+        if (hours == 0) {
+            return minutes + " minutes";
+        }
+
+        return hours + " hr " + minutes + " min";
+    }
+
+    private static double estimatedCruiseSpeedKnots(String aircraft) {
+        if ("Cessna 172".equalsIgnoreCase(aircraft)) {
+            return 122.0;
+        }
+
+        if ("Beechcraft Bonanza".equalsIgnoreCase(aircraft)) {
+            return 170.0;
+        }
+
+        if ("Boeing 737 MAX".equalsIgnoreCase(aircraft)) {
+            return 453.0;
+        }
+
+        return 140.0;
+    }
+
     private static double[] airportCoordinates(String airport) {
         if ("KLAX".equalsIgnoreCase(airport)) {
             return new double[] { 33.9416, -118.4085 };
@@ -199,6 +308,38 @@ public class main {
 
         if ("KSAN".equalsIgnoreCase(airport)) {
             return new double[] { 32.7338, -117.1933 };
+        }
+
+        if ("KLAS".equalsIgnoreCase(airport)) {
+            return new double[] { 36.0840, -115.1537 };
+        }
+
+        if ("KPHX".equalsIgnoreCase(airport)) {
+            return new double[] { 33.4342, -112.0116 };
+        }
+
+        if ("KSEA".equalsIgnoreCase(airport)) {
+            return new double[] { 47.4502, -122.3088 };
+        }
+
+        if ("KORD".equalsIgnoreCase(airport)) {
+            return new double[] { 41.9742, -87.9073 };
+        }
+
+        if ("KDFW".equalsIgnoreCase(airport)) {
+            return new double[] { 32.8998, -97.0403 };
+        }
+
+        if ("KATL".equalsIgnoreCase(airport)) {
+            return new double[] { 33.6407, -84.4277 };
+        }
+
+        if ("KJFK".equalsIgnoreCase(airport)) {
+            return new double[] { 40.6413, -73.7781 };
+        }
+
+        if ("KMIA".equalsIgnoreCase(airport)) {
+            return new double[] { 25.7959, -80.2870 };
         }
 
         return new double[] { 0.0, 0.0 };

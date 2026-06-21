@@ -1,12 +1,136 @@
 <!doctype html>
 <html>
 <head>
-    <title>Java Decision Demo</title>
+    <title>CloudFlite</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            align-items: center;
+            background:
+                radial-gradient(ellipse at 16% 18%, rgba(255, 255, 255, 0.92) 0 7%, transparent 7.5%),
+                radial-gradient(ellipse at 25% 16%, rgba(255, 255, 255, 0.84) 0 10%, transparent 10.5%),
+                radial-gradient(ellipse at 34% 19%, rgba(255, 255, 255, 0.88) 0 7%, transparent 7.5%),
+                radial-gradient(ellipse at 70% 12%, rgba(255, 255, 255, 0.82) 0 8%, transparent 8.5%),
+                radial-gradient(ellipse at 80% 15%, rgba(255, 255, 255, 0.9) 0 11%, transparent 11.5%),
+                radial-gradient(ellipse at 90% 13%, rgba(255, 255, 255, 0.78) 0 7%, transparent 7.5%),
+                radial-gradient(ellipse at 10% 78%, rgba(255, 255, 255, 0.78) 0 8%, transparent 8.5%),
+                radial-gradient(ellipse at 20% 81%, rgba(255, 255, 255, 0.86) 0 11%, transparent 11.5%),
+                radial-gradient(ellipse at 32% 79%, rgba(255, 255, 255, 0.72) 0 7%, transparent 7.5%),
+                radial-gradient(ellipse at 75% 74%, rgba(255, 255, 255, 0.72) 0 9%, transparent 9.5%),
+                radial-gradient(ellipse at 86% 77%, rgba(255, 255, 255, 0.84) 0 12%, transparent 12.5%),
+                linear-gradient(180deg, #8fd3ff 0%, #dff4ff 58%, #f8fcff 100%);
+            background-attachment: fixed;
+            color: #17324d;
+            display: flex;
+            font-family: "Segoe UI", Arial, sans-serif;
+            justify-content: center;
+            margin: 0;
+            min-height: 100vh;
+            padding: 32px 16px;
+        }
+
+        main {
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid rgba(255, 255, 255, 0.85);
+            border-radius: 8px;
+            box-shadow: 0 18px 45px rgba(23, 50, 77, 0.18);
+            max-width: 920px;
+            padding: 28px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #0f4c81;
+            font-size: 42px;
+            letter-spacing: 0;
+            margin: 0 0 8px;
+        }
+
+        .subtitle {
+            color: #49677f;
+            font-size: 16px;
+            line-height: 1.45;
+            margin: 0 0 20px;
+            max-width: 760px;
+        }
+
+        section {
+            border-top: 1px solid #d8e8f3;
+            margin-top: 18px;
+            padding-top: 18px;
+        }
+
+        button {
+            background: #ffffff;
+            border: 1px solid #9ac7e5;
+            border-radius: 6px;
+            color: #17324d;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 600;
+            margin: 5px;
+            padding: 10px 14px;
+            transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background: #e7f5ff;
+            border-color: #348dc2;
+            cursor: pointer;
+            transform: translateY(-1px);
+        }
+
+        button:disabled {
+            color: #8ca1b3;
+            cursor: not-allowed;
+            opacity: 0.65;
+        }
+
+        .output-box {
+            background: #f7fbff;
+            border: 1px solid #c8e2f2;
+            border-left: 5px solid #2b8cc4;
+            border-radius: 8px;
+            color: #21384f;
+            font-family: "Segoe UI", Arial, sans-serif;
+            line-height: 1.55;
+            margin-top: 22px;
+            min-height: 80px;
+            padding: 16px;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+
+        .disclaimer {
+            color: #5f7283;
+            font-size: 13px;
+            line-height: 1.45;
+            margin: 14px 0 0;
+        }
+
+        @media (max-width: 640px) {
+            main {
+                padding: 22px;
+            }
+
+            h1 {
+                font-size: 34px;
+            }
+
+            button {
+                width: 100%;
+            }
+        }
+    </style>
 </head>
 <body>
     <div id="root">
         <main>
             <h1>CloudFlite</h1>
+            <p class="subtitle">An AI-assisted flight data manager designed to work alongside official tools for planning decisions and records.</p>
             <button>AI</button>
             <button>Non AI</button>
             <p>Loading React...</p>

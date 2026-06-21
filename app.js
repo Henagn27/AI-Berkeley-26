@@ -1,5 +1,5 @@
 function App() {
-    const [output, setOutput] = React.useState("Output");
+    const [output, setOutput] = React.useState("Welcome!");
     const [loading, setLoading] = React.useState(false);
     const [selectedMode, setSelectedMode] = React.useState("");
     const [selectedAircraft, setSelectedAircraft] = React.useState("");
@@ -8,10 +8,24 @@ function App() {
 
     const aircraftChoices = [
         { label: "Cessna 172", value: "cessna-172" },
-        { label: "Beechcraft Bonanza", value: "beechcraft-bonanza" }
+        { label: "Beechcraft Bonanza", value: "beechcraft-bonanza" },
+        { label: "Boeing 737 MAX", value: "boeing-737-max" }
     ];
 
-    const airportChoices = ["KLAX", "KSFO", "KDEN", "KSAN"];
+    const airportChoices = [
+        { label: "Los Angeles International (KLAX)", value: "KLAX" },
+        { label: "San Francisco International (KSFO)", value: "KSFO" },
+        { label: "Denver International (KDEN)", value: "KDEN" },
+        { label: "San Diego International (KSAN)", value: "KSAN" },
+        { label: "Harry Reid International (KLAS)", value: "KLAS" },
+        { label: "Phoenix Sky Harbor International (KPHX)", value: "KPHX" },
+        { label: "Seattle-Tacoma International (KSEA)", value: "KSEA" },
+        { label: "Chicago O'Hare International (KORD)", value: "KORD" },
+        { label: "Dallas/Fort Worth International (KDFW)", value: "KDFW" },
+        { label: "Hartsfield-Jackson Atlanta International (KATL)", value: "KATL" },
+        { label: "John F. Kennedy International (KJFK)", value: "KJFK" },
+        { label: "Miami International (KMIA)", value: "KMIA" }
+    ];
 
     // Sends the completed user choice to Java and displays Java's response.
     async function sendActionToJava(action) {
@@ -51,7 +65,7 @@ function App() {
         setSelectedAircraft("");
         setSelectedAirports([]);
         setShowMainMenuButton(false);
-        setOutput("Output");
+        setOutput("Welcome!");
     }
 
     function chooseMode(mode) {
@@ -151,13 +165,13 @@ function App() {
                 return React.createElement(
                     "button",
                     {
-                        key: airport,
+                        key: airport.value,
                         onClick: function () {
-                            chooseAirport(airport);
+                            chooseAirport(airport.value);
                         },
-                        disabled: loading || selectedAirports.includes(airport) || selectedAirports.length >= 2
+                        disabled: loading || selectedAirports.includes(airport.value) || selectedAirports.length >= 2
                     },
-                    airport
+                    airport.label
                 );
             })
         );
@@ -182,10 +196,20 @@ function App() {
         "main",
         null,
         React.createElement("h1", null, "CloudFlite"),
+        React.createElement(
+            "p",
+            { className: "subtitle" },
+            "An AI-assisted flight data manager designed to work alongside official tools for planning decisions and records."
+        ),
         renderMainButtons(),
         renderAircraftButtons(),
         renderAirportButtons(),
-        React.createElement("p", null, output),
+        React.createElement("div", { className: "output-box" }, output),
+        React.createElement(
+            "p",
+            { className: "disclaimer" },
+            "CloudFlite is a demo planning aid and does not replace official aviation tools, weather briefings, regulations, ATC guidance, or pilot judgment."
+        ),
         renderMainMenuButton()
     );
 }
