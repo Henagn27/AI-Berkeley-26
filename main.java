@@ -37,6 +37,7 @@ public class main {
     private static void startServer() throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
 
+        // These routes let Java serve the page, the React code, and backend decisions.
         server.createContext("/", main::serveHtml);
         server.createContext("/app.js", main::serveReactApp);
         server.createContext("/decide", main::handleDecision);
@@ -57,6 +58,7 @@ public class main {
     }
 
     private static void handleDecision(HttpExchange exchange) throws IOException {
+        // Browsers may send OPTIONS before POST when making local API calls.
         if (exchange.getRequestMethod().equalsIgnoreCase("OPTIONS")) {
             sendResponse(exchange, 204, "application/json", new byte[0]);
             return;
@@ -75,6 +77,7 @@ public class main {
     }
 
     private static String decide(String action) {
+        // Completed route selections are encoded as route|mode|aircraft|departure|arrival.
         if (action.startsWith("route|")) {
             return decideRoute(action);
         }
@@ -110,6 +113,7 @@ public class main {
         String arrivingAirport = parts[4];
         double distance = estimateDistanceNauticalMiles(departingAirport, arrivingAirport);
 
+        // Only the AI flow calls OpenAI. The Non AI flow stays as a normal route summary.
         if ("ai".equals(parts[1])) {
             return getAiFlightPlanRecommendation(aircraft, departingAirport, arrivingAirport, distance);
         }
@@ -135,13 +139,17 @@ public class main {
             return "OPENAI_API_KEY is missing. Set it in PowerShell, restart the server, and try the AI route again.";
         }
 
+        // The prompt keeps the MVP focused: aircraft + route distance -> likely IFR or VFR.
         String prompt = "This is a hackathon demo, not real flight-planning advice. "
-                + "Recommend either an IFR or VFR flight plan for a simulated route. "
+                + "Choose the more likely flight plan type for this simulated route: IFR or VFR. "
                 + "Aircraft: " + aircraft + ". "
                 + "Route: " + departingAirport + " to " + arrivingAirport + ". "
                 + "Estimated great-circle distance: " + Math.round(distance) + " nautical miles. "
                 + "Base the recommendation only on aircraft type and distance. "
-                + "Answer in 3 short sentences: recommendation first, then brief reason, then a reminder that a real pilot must check weather, regulations, aircraft performance, and ATC requirements.";
+                + "The first sentence must be exactly this format: Based on the information given, most likely the flight plan will be IFR. "
+                + "or this format: Based on the information given, most likely the flight plan will be VFR. "
+                + "After that, add one short reason. "
+                + "End with: This is only a planning estimate; verify with official aviation tools, weather, regulations, aircraft performance, and pilot judgment.";
 
         try {
             OpenAIClient client = OpenAIOkHttpClient.fromEnv();
@@ -159,6 +167,7 @@ public class main {
     }
 
     private static double estimateDistanceNauticalMiles(String firstAirport, String secondAirport) {
+        // Great-circle distance estimate using hardcoded airport coordinates.
         double[] first = airportCoordinates(firstAirport);
         double[] second = airportCoordinates(secondAirport);
 
@@ -196,6 +205,7 @@ public class main {
     }
 
     private static String getOutputText(Response response) {
+        // SDK 4.0.0 stores response text inside output message content items.
         StringBuilder outputText = new StringBuilder();
 
         for (ResponseOutputItem item : response.output()) {

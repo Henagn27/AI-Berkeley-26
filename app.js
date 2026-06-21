@@ -4,6 +4,7 @@ function App() {
     const [selectedMode, setSelectedMode] = React.useState("");
     const [selectedAircraft, setSelectedAircraft] = React.useState("");
     const [selectedAirports, setSelectedAirports] = React.useState([]);
+    const [showMainMenuButton, setShowMainMenuButton] = React.useState(false);
 
     const aircraftChoices = [
         { label: "Cessna 172", value: "cessna-172" },
@@ -12,6 +13,7 @@ function App() {
 
     const airportChoices = ["KLAX", "KSFO", "KDEN", "KSAN"];
 
+    // Sends the completed user choice to Java and displays Java's response.
     async function sendActionToJava(action) {
         setLoading(true);
         setOutput("Asking Java...");
@@ -31,6 +33,10 @@ function App() {
 
             const result = await response.json();
             setOutput(result.message);
+
+            if (action.startsWith("route|ai|")) {
+                setShowMainMenuButton(true);
+            }
         } catch (error) {
             setOutput("Could not reach Java. Run the server in PowerShell, then open http://localhost:8000");
             console.error(error);
@@ -39,25 +45,33 @@ function App() {
         }
     }
 
+    // Resets the page to the first AI / Non AI choice.
+    function returnToMainMenu() {
+        setSelectedMode("");
+        setSelectedAircraft("");
+        setSelectedAirports([]);
+        setShowMainMenuButton(false);
+        setOutput("Output");
+    }
+
     function chooseMode(mode) {
         setSelectedMode(mode);
         setSelectedAircraft("");
         setSelectedAirports([]);
+        setShowMainMenuButton(false);
         setOutput("Choose an aircraft.");
     }
 
     function chooseAircraft(aircraft) {
         setSelectedAircraft(aircraft);
         setSelectedAirports([]);
+        setShowMainMenuButton(false);
         setOutput("Choose two airports to determine the range.");
     }
 
+    // The second airport click completes the route and triggers the backend.
     function chooseAirport(airport) {
-        if (selectedAirports.includes(airport)) {
-            return;
-        }
-
-        if (selectedAirports.length >= 2) {
+        if (selectedAirports.includes(airport) || selectedAirports.length >= 2) {
             return;
         }
 
@@ -74,30 +88,39 @@ function App() {
         setOutput("Choose one more airport.");
     }
 
-    return React.createElement(
-        "main",
-        null,
-        React.createElement(
-            "button",
-            {
-                onClick: function () {
-                    chooseMode("ai");
+    function renderMainButtons() {
+        return React.createElement(
+            "section",
+            null,
+            React.createElement(
+                "button",
+                {
+                    onClick: function () {
+                        chooseMode("ai");
+                    },
+                    disabled: loading
                 },
-                disabled: loading
-            },
-            "AI"
-        ),
-        React.createElement(
-            "button",
-            {
-                onClick: function () {
-                    chooseMode("non-ai");
+                "AI"
+            ),
+            React.createElement(
+                "button",
+                {
+                    onClick: function () {
+                        chooseMode("non-ai");
+                    },
+                    disabled: loading
                 },
-                disabled: loading
-            },
-            "Non AI"
-        ),
-        selectedMode && React.createElement(
+                "Non AI"
+            )
+        );
+    }
+
+    function renderAircraftButtons() {
+        if (!selectedMode) {
+            return null;
+        }
+
+        return React.createElement(
             "section",
             null,
             aircraftChoices.map(function (aircraft) {
@@ -113,8 +136,15 @@ function App() {
                     aircraft.label
                 );
             })
-        ),
-        selectedAircraft && React.createElement(
+        );
+    }
+
+    function renderAirportButtons() {
+        if (!selectedAircraft) {
+            return null;
+        }
+
+        return React.createElement(
             "section",
             null,
             airportChoices.map(function (airport) {
@@ -130,8 +160,33 @@ function App() {
                     airport
                 );
             })
-        ),
-        React.createElement("p", null, output)
+        );
+    }
+
+    function renderMainMenuButton() {
+        if (!showMainMenuButton) {
+            return null;
+        }
+
+        return React.createElement(
+            "button",
+            {
+                onClick: returnToMainMenu,
+                disabled: loading
+            },
+            "Main Menu"
+        );
+    }
+
+    return React.createElement(
+        "main",
+        null,
+        React.createElement("h1", null, "CloudFlite"),
+        renderMainButtons(),
+        renderAircraftButtons(),
+        renderAirportButtons(),
+        React.createElement("p", null, output),
+        renderMainMenuButton()
     );
 }
 
