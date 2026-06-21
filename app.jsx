@@ -33,10 +33,10 @@ function App() {
     return (
         <main>
             <button onClick={() => setShowAircraftChoices(true)} disabled={loading}>
-                AI Info
+                AI
             </button>
             <button onClick={() => sendActionToJava("non-ai-info")} disabled={loading}>
-                Non-AI Info
+                Non AI
             </button>
 
             {showAircraftChoices && (
@@ -44,8 +44,8 @@ function App() {
                     <button onClick={() => sendActionToJava("ai-cessna-172")} disabled={loading}>
                         Cessna 172
                     </button>
-                    <button onClick={() => sendActionToJava("ai-beechcraft-bonbanza")} disabled={loading}>
-                        Beechcraft Bonbanza
+                    <button onClick={() => sendActionToJava("ai-beechcraft-bonanza")} disabled={loading}>
+                        Beechcraft Bonanza
                     </button>
                 </section>
             )}
