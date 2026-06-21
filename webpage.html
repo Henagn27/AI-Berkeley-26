@@ -4,10 +4,17 @@
     <title>Java Decision Demo</title>
 </head>
 <body>
-    <button id="button1" data-action="apple">Apple</button>
-    <p id="output">Output</p>
+    <div id="root">
+        <main>
+            <button>AI Info</button>
+            <button>Non-AI Info</button>
+            <p>Loading React...</p>
+        </main>
+    </div>
 
-    <script src="frontend.js"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script type="text/babel" src="app.jsx"></script>
 </body>
 </html>
-

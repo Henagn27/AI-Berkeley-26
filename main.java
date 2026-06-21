@@ -30,7 +30,7 @@ public class main {
         HttpServer server = HttpServer.create(new InetSocketAddress(8000), 0);
 
         server.createContext("/", main::serveHtml);
-        server.createContext("/frontend.js", main::serveJavaScript);
+        server.createContext("/app.jsx", main::serveReactApp);
         server.createContext("/decide", main::handleDecision);
 
         server.start();
@@ -43,8 +43,8 @@ public class main {
         sendResponse(exchange, 200, "text/html", page);
     }
 
-    private static void serveJavaScript(HttpExchange exchange) throws IOException {
-        byte[] script = Files.readAllBytes(Path.of("frontend.js"));
+    private static void serveReactApp(HttpExchange exchange) throws IOException {
+        byte[] script = Files.readAllBytes(Path.of("app.jsx"));
         sendResponse(exchange, 200, "application/javascript", script);
     }
 
@@ -67,8 +67,20 @@ public class main {
     }
 
     private static String decide(String action) {
-        if ("apple".equalsIgnoreCase(action)) {
-            return "Java received Apple and decided: approved.";
+        if ("ai-info".equalsIgnoreCase(action)) {
+            return "Java received AI Info.";
+        }
+
+        if ("ai-cessna-172".equalsIgnoreCase(action)) {
+            return "Java received AI Info for Cessna 172.";
+        }
+
+        if ("ai-beechcraft-bonbanza".equalsIgnoreCase(action)) {
+            return "Java received AI Info for Beechcraft Bonbanza.";
+        }
+
+        if ("non-ai-info".equalsIgnoreCase(action)) {
+            return "Java received Non-AI Info.";
         }
 
         return "Java received an unknown action.";
