@@ -1,7 +1,16 @@
 function App() {
     const [output, setOutput] = React.useState("Output");
     const [loading, setLoading] = React.useState(false);
-    const [showAircraftChoices, setShowAircraftChoices] = React.useState(false);
+    const [selectedMode, setSelectedMode] = React.useState("");
+    const [selectedAircraft, setSelectedAircraft] = React.useState("");
+    const [selectedAirports, setSelectedAirports] = React.useState([]);
+
+    const aircraftChoices = [
+        { label: "Cessna 172", value: "cessna-172" },
+        { label: "Beechcraft Bonanza", value: "beechcraft-bonanza" }
+    ];
+
+    const airportChoices = ["KLAX", "KSFO", "KDEN", "KSAN"];
 
     async function sendActionToJava(action) {
         setLoading(true);
@@ -30,6 +39,41 @@ function App() {
         }
     }
 
+    function chooseMode(mode) {
+        setSelectedMode(mode);
+        setSelectedAircraft("");
+        setSelectedAirports([]);
+        setOutput("Choose an aircraft.");
+    }
+
+    function chooseAircraft(aircraft) {
+        setSelectedAircraft(aircraft);
+        setSelectedAirports([]);
+        setOutput("Choose two airports to determine the range.");
+    }
+
+    function chooseAirport(airport) {
+        if (selectedAirports.includes(airport)) {
+            return;
+        }
+
+        if (selectedAirports.length >= 2) {
+            return;
+        }
+
+        const nextAirports = selectedAirports.concat(airport);
+        setSelectedAirports(nextAirports);
+
+        if (nextAirports.length === 2) {
+            sendActionToJava(
+                "route|" + selectedMode + "|" + selectedAircraft + "|" + nextAirports[0] + "|" + nextAirports[1]
+            );
+            return;
+        }
+
+        setOutput("Choose one more airport.");
+    }
+
     return React.createElement(
         "main",
         null,
@@ -37,7 +81,7 @@ function App() {
             "button",
             {
                 onClick: function () {
-                    setShowAircraftChoices(true);
+                    chooseMode("ai");
                 },
                 disabled: loading
             },
@@ -47,35 +91,45 @@ function App() {
             "button",
             {
                 onClick: function () {
-                    sendActionToJava("non-ai-info");
+                    chooseMode("non-ai");
                 },
                 disabled: loading
             },
             "Non AI"
         ),
-        showAircraftChoices && React.createElement(
+        selectedMode && React.createElement(
             "section",
             null,
-            React.createElement(
-                "button",
-                {
-                    onClick: function () {
-                        sendActionToJava("ai-cessna-172");
+            aircraftChoices.map(function (aircraft) {
+                return React.createElement(
+                    "button",
+                    {
+                        key: aircraft.value,
+                        onClick: function () {
+                            chooseAircraft(aircraft.value);
+                        },
+                        disabled: loading
                     },
-                    disabled: loading
-                },
-                "Cessna 172"
-            ),
-            React.createElement(
-                "button",
-                {
-                    onClick: function () {
-                        sendActionToJava("ai-beechcraft-bonanza");
+                    aircraft.label
+                );
+            })
+        ),
+        selectedAircraft && React.createElement(
+            "section",
+            null,
+            airportChoices.map(function (airport) {
+                return React.createElement(
+                    "button",
+                    {
+                        key: airport,
+                        onClick: function () {
+                            chooseAirport(airport);
+                        },
+                        disabled: loading || selectedAirports.includes(airport) || selectedAirports.length >= 2
                     },
-                    disabled: loading
-                },
-                "Beechcraft Bonanza"
-            )
+                    airport
+                );
+            })
         ),
         React.createElement("p", null, output)
     );

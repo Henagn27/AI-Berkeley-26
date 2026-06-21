@@ -9,11 +9,7 @@
 # If port 8000 gets stuck, find and stop the listening process:
 # netstat -ano | findstr :8000
 # taskkill /PID THE_LISTENING_PID /F
+#
+# The AI path also needs OPENAI_API_KEY set before starting the server.
 
-& "C:\Users\dusty\AppData\Local\Programs\Eclipse Adoptium\jdk-25.0.2.10-hotspot\bin\javac.exe" main.java aircraft.java informationAI.java informationNonAI.java
-
-if ($LASTEXITCODE -ne 0) {
-    exit $LASTEXITCODE
-}
-
-& "C:\Users\dusty\AppData\Local\Programs\Eclipse Adoptium\jdk-25.0.2.10-hotspot\bin\java.exe" main
+mvn compile exec:java "-Dexec.mainClass=main"

@@ -1,3 +1,9 @@
+import com.openai.client.OpenAIClient;
+import com.openai.client.okhttp.OpenAIOkHttpClient;
+import com.openai.models.responses.Response;
+import com.openai.models.responses.ResponseCreateParams;
+import com.openai.models.responses.ResponseOutputItem;
+import com.openai.models.responses.ResponseOutputMessage;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
@@ -9,6 +15,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class main {
+    private static final String OPENAI_MODEL = "gpt-5.5";
+
     public static void main(String[] args) {
         try {
             startServer();
@@ -67,6 +75,10 @@ public class main {
     }
 
     private static String decide(String action) {
+        if (action.startsWith("route|")) {
+            return decideRoute(action);
+        }
+
         if ("ai-info".equalsIgnoreCase(action)) {
             return "Java received AI Info.";
         }
@@ -84,6 +96,127 @@ public class main {
         }
 
         return "Java received an unknown action.";
+    }
+
+    private static String decideRoute(String action) {
+        String[] parts = action.split("\\|");
+        if (parts.length != 5) {
+            return "Java received an incomplete route.";
+        }
+
+        String mode = parts[1].equals("ai") ? "AI" : "Non AI";
+        String aircraft = formatAircraft(parts[2]);
+        String departingAirport = parts[3];
+        String arrivingAirport = parts[4];
+        double distance = estimateDistanceNauticalMiles(departingAirport, arrivingAirport);
+
+        if ("ai".equals(parts[1])) {
+            return getAiFlightPlanRecommendation(aircraft, departingAirport, arrivingAirport, distance);
+        }
+
+        return mode + " route selected: " + aircraft + " from " + departingAirport + " to " + arrivingAirport
+                + ". Estimated distance: " + Math.round(distance) + " nautical miles.";
+    }
+
+    private static String formatAircraft(String aircraft) {
+        if ("cessna-172".equalsIgnoreCase(aircraft)) {
+            return "Cessna 172";
+        }
+
+        if ("beechcraft-bonanza".equalsIgnoreCase(aircraft)) {
+            return "Beechcraft Bonanza";
+        }
+
+        return aircraft;
+    }
+
+    private static String getAiFlightPlanRecommendation(String aircraft, String departingAirport, String arrivingAirport, double distance) {
+        if (System.getenv("OPENAI_API_KEY") == null || System.getenv("OPENAI_API_KEY").isBlank()) {
+            return "OPENAI_API_KEY is missing. Set it in PowerShell, restart the server, and try the AI route again.";
+        }
+
+        String prompt = "This is a hackathon demo, not real flight-planning advice. "
+                + "Recommend either an IFR or VFR flight plan for a simulated route. "
+                + "Aircraft: " + aircraft + ". "
+                + "Route: " + departingAirport + " to " + arrivingAirport + ". "
+                + "Estimated great-circle distance: " + Math.round(distance) + " nautical miles. "
+                + "Base the recommendation only on aircraft type and distance. "
+                + "Answer in 3 short sentences: recommendation first, then brief reason, then a reminder that a real pilot must check weather, regulations, aircraft performance, and ATC requirements.";
+
+        try {
+            OpenAIClient client = OpenAIOkHttpClient.fromEnv();
+
+            ResponseCreateParams params = ResponseCreateParams.builder()
+                    .input(prompt)
+                    .model(OPENAI_MODEL)
+                    .build();
+
+            Response response = client.responses().create(params);
+            return "Estimated distance: " + Math.round(distance) + " nautical miles.\n\n" + getOutputText(response);
+        } catch (RuntimeException error) {
+            return "OpenAI request failed: " + error.getMessage();
+        }
+    }
+
+    private static double estimateDistanceNauticalMiles(String firstAirport, String secondAirport) {
+        double[] first = airportCoordinates(firstAirport);
+        double[] second = airportCoordinates(secondAirport);
+
+        double firstLatitude = Math.toRadians(first[0]);
+        double secondLatitude = Math.toRadians(second[0]);
+        double latitudeDifference = Math.toRadians(second[0] - first[0]);
+        double longitudeDifference = Math.toRadians(second[1] - first[1]);
+
+        double a = Math.sin(latitudeDifference / 2) * Math.sin(latitudeDifference / 2)
+                + Math.cos(firstLatitude) * Math.cos(secondLatitude)
+                * Math.sin(longitudeDifference / 2) * Math.sin(longitudeDifference / 2);
+        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return 3440.065 * c;
+    }
+
+    private static double[] airportCoordinates(String airport) {
+        if ("KLAX".equalsIgnoreCase(airport)) {
+            return new double[] { 33.9416, -118.4085 };
+        }
+
+        if ("KSFO".equalsIgnoreCase(airport)) {
+            return new double[] { 37.6213, -122.3790 };
+        }
+
+        if ("KDEN".equalsIgnoreCase(airport)) {
+            return new double[] { 39.8561, -104.6737 };
+        }
+
+        if ("KSAN".equalsIgnoreCase(airport)) {
+            return new double[] { 32.7338, -117.1933 };
+        }
+
+        return new double[] { 0.0, 0.0 };
+    }
+
+    private static String getOutputText(Response response) {
+        StringBuilder outputText = new StringBuilder();
+
+        for (ResponseOutputItem item : response.output()) {
+            if (!item.isMessage()) {
+                continue;
+            }
+
+            ResponseOutputMessage message = item.asMessage();
+
+            message.content().forEach(content -> {
+                if (content.isOutputText()) {
+                    outputText.append(content.asOutputText().text());
+                }
+            });
+        }
+
+        if (outputText.length() == 0) {
+            return "No text output was returned.";
+        }
+
+        return outputText.toString();
     }
 
     private static String getJsonValue(String json, String key) {
@@ -119,6 +252,10 @@ public class main {
     }
 
     private static String escapeJson(String text) {
-        return text.replace("\\", "\\\\").replace("\"", "\\\"");
+        return text
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r");
     }
 }
